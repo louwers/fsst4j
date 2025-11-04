@@ -47,9 +47,13 @@ tasks.register<Exec>("configureFsst") {
     workingDir = fsstBuildDir
     
     // Add -fPIC for Linux to enable creating shared libraries from static library
+    // Force Release mode on Windows to avoid Debug configuration issues
     val cmakeArgs = mutableListOf("..")
     if (isLinux) {
         cmakeArgs.add("-DCMAKE_CXX_FLAGS=-fPIC")
+    }
+    if (isWindows) {
+        cmakeArgs.add("-DCMAKE_BUILD_TYPE=Release")
     }
     
     commandLine("cmake", *cmakeArgs.toTypedArray())
