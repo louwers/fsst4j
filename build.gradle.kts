@@ -177,6 +177,11 @@ tasks.register<Copy>("embedNativeLibrary") {
     outputs.upToDateWhen { false }
 }
 
+// Fix task dependency for javadoc
+tasks.named("javadoc") {
+    mustRunAfter("embedNativeLibrary")
+}
+
 // Detect platform string for Maven classifier
 fun detectPlatform(): String {
     val os = System.getProperty("os.name").lowercase()

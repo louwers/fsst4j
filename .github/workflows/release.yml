@@ -98,9 +98,9 @@ jobs:
       - name: Build JAR
         run: |
           if [ -f ./gradlew ]; then
-            ./gradlew clean build jar
+            ./gradlew clean jar --no-daemon
           else
-            gradle clean build jar
+            gradle clean jar --no-daemon
           fi
         shell: bash
       
