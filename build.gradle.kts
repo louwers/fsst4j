@@ -90,8 +90,8 @@ tasks.register<Exec>("buildFsstShared") {
     val linkerFlags = when {
         isWindows -> listOf("-shared", "-o", fsstSharedLib.absolutePath, fsstStaticLib.absolutePath, "-std=c++17")
         isMac -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,-all_load", fsstStaticLib.absolutePath, "-std=c++17")
-        isLinux -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
-        else -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
+        isLinux -> listOf("-shared", "-fPIC", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
+        else -> listOf("-shared", "-fPIC", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
     }
     
     commandLine(cxx, *linkerFlags.toTypedArray())
