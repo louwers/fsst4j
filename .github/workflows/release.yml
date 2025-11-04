@@ -39,7 +39,10 @@ jobs:
       
       - name: Make gradlew executable
         if: runner.os != 'Windows'
-        run: chmod +x ./gradlew
+        run: |
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+          fi
       
       - name: Extract version from tag
         if: github.event_name == 'push'
@@ -93,7 +96,12 @@ jobs:
             ${{ runner.os }}-gradle-
       
       - name: Build JAR
-        run: ./gradlew clean build jar
+        run: |
+          if [ -f ./gradlew ]; then
+            ./gradlew clean build jar
+          else
+            gradle clean build jar
+          fi
         shell: bash
       
       - name: Upload JAR artifacts
@@ -130,7 +138,10 @@ jobs:
           distribution: 'temurin'
       
       - name: Make gradlew executable
-        run: chmod +x ./gradlew
+        run: |
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+          fi
       
       - name: Extract version from tag
         if: github.event_name == 'push'
@@ -168,7 +179,12 @@ jobs:
           cmake-version: 'latest'
       
       - name: Build sources and javadoc (for main artifact)
-        run: ./gradlew clean build sourcesJar javadocJar
+        run: |
+          if [ -f ./gradlew ]; then
+            ./gradlew clean build sourcesJar javadocJar
+          else
+            gradle clean build sourcesJar javadocJar
+          fi
         shell: bash
       
       - name: Prepare platform JARs with classifiers
@@ -200,7 +216,12 @@ jobs:
         shell: bash
       
       - name: Publish to Maven Central
-        run: ./gradlew publish -PplatformJarsDir=platform-jars-classified
+        run: |
+          if [ -f ./gradlew ]; then
+            ./gradlew publish -PplatformJarsDir=platform-jars-classified
+          else
+            gradle publish -PplatformJarsDir=platform-jars-classified
+          fi
         env:
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
