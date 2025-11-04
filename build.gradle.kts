@@ -45,7 +45,14 @@ tasks.register<Exec>("configureFsst") {
     val fsstSourceDir = file("fsst")
     
     workingDir = fsstBuildDir
-    commandLine("cmake", "..")
+    
+    // Add -fPIC for Linux to enable creating shared libraries from static library
+    val cmakeArgs = mutableListOf("..")
+    if (isLinux) {
+        cmakeArgs.add("-DCMAKE_CXX_FLAGS=-fPIC")
+    }
+    
+    commandLine("cmake", *cmakeArgs.toTypedArray())
     
     doFirst {
         fsstBuildDir.mkdirs()
@@ -90,7 +97,7 @@ tasks.register<Exec>("buildFsstShared") {
     val linkerFlags = when {
         isWindows -> listOf("-shared", "-o", fsstSharedLib.absolutePath, fsstStaticLib.absolutePath, "-std=c++17")
         isMac -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,-all_load", fsstStaticLib.absolutePath, "-std=c++17")
-        isLinux -> listOf("-shared", "-fPIC", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
+        isLinux -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
         else -> listOf("-shared", "-fPIC", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
     }
     
