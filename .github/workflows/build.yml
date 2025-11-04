@@ -52,14 +52,14 @@ jobs:
       
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.os }}
           path: build/reports/tests/test/
           retention-days: 30
       
       - name: Upload JAR artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jar-${{ matrix.os }}
           path: build/libs/*.jar

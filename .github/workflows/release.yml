@@ -97,7 +97,7 @@ jobs:
         shell: bash
       
       - name: Upload JAR artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jar-${{ matrix.os }}
           path: build/libs/*.jar
@@ -156,7 +156,7 @@ jobs:
         shell: bash
       
       - name: Download all JAR artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           pattern: jar-*
           merge-multiple: false
@@ -209,7 +209,7 @@ jobs:
         shell: bash
       
       - name: Upload published artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: published-artifacts
           path: build/libs/*.jar
