@@ -1,0 +1,116 @@
+name: Publish to Maven Central
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        java-version: ['22']
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+      
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v1.14
+        with:
+          cmake-version: 'latest'
+      
+      - name: Setup GPG
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          fingerprint: ${{ secrets.GPG_FINGERPRINT }}
+      
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      
+      - name: Update version (Unix)
+        if: github.event_name == 'release' && runner.os != 'Windows'
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION=${VERSION#v}
+          sed -i.bak "s/version = \".*\"/version = \"$VERSION\"/" build.gradle.kts
+        shell: bash
+      
+      - name: Update version (Windows)
+        if: github.event_name == 'release' && runner.os == 'Windows'
+        run: |
+          $VERSION = "${{ github.event.release.tag_name }}" -replace '^v', ''
+          $content = Get-Content build.gradle.kts -Raw
+          $content = $content -replace 'version = ".*"', "version = `"$VERSION`""
+          Set-Content build.gradle.kts -Value $content -NoNewline
+        shell: pwsh
+      
+      - name: Update version manual (Unix)
+        if: github.event_name == 'workflow_dispatch' && runner.os != 'Windows'
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          sed -i.bak "s/version = \".*\"/version = \"$VERSION\"/" build.gradle.kts
+        shell: bash
+      
+      - name: Update version manual (Windows)
+        if: github.event_name == 'workflow_dispatch' && runner.os == 'Windows'
+        run: |
+          $VERSION = "${{ github.event.inputs.version }}"
+          $content = Get-Content build.gradle.kts -Raw
+          $content = $content -replace 'version = ".*"', "version = `"$VERSION`""
+          Set-Content build.gradle.kts -Value $content -NoNewline
+        shell: pwsh
+      
+      - name: Create Gradle properties (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p ~/.gradle
+          echo "sonatypeUsername=${{ secrets.SONATYPE_USERNAME }}" >> ~/.gradle/gradle.properties
+          echo "sonatypePassword=${{ secrets.SONATYPE_PASSWORD }}" >> ~/.gradle/gradle.properties
+        shell: bash
+      
+      - name: Create Gradle properties (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $gradleDir = "$env:USERPROFILE\.gradle"
+          New-Item -ItemType Directory -Force -Path $gradleDir | Out-Null
+          Add-Content -Path "$gradleDir\gradle.properties" -Value "sonatypeUsername=${{ secrets.SONATYPE_USERNAME }}"
+          Add-Content -Path "$gradleDir\gradle.properties" -Value "sonatypePassword=${{ secrets.SONATYPE_PASSWORD }}"
+        shell: pwsh
+      
+      - name: Build and publish
+        run: ./gradlew clean build publish
+        shell: bash
+      
+      - name: Upload published artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: published-jar-${{ matrix.os }}
+          path: build/libs/*.jar
+          retention-days: 90
+

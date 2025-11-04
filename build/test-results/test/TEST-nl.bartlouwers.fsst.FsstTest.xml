@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="nl.bartlouwers.fsst.FsstTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2025-11-04T23:35:20.844Z" hostname="MacBook-Pro.local" time="0.013">
+  <properties/>
+  <testcase name="testEncodeDecodeWithLargeData()" classname="nl.bartlouwers.fsst.FsstTest" time="0.002"/>
+  <testcase name="testEncodeDecodeWithRepeatedPatterns()" classname="nl.bartlouwers.fsst.FsstTest" time="0.0"/>
+  <testcase name="testEncodeDecodeWithSingleByte()" classname="nl.bartlouwers.fsst.FsstTest" time="0.0"/>
+  <testcase name="testEncodeNullThrowsException()" classname="nl.bartlouwers.fsst.FsstTest" time="0.001"/>
+  <testcase name="testDecodeDeprecatedMethod()" classname="nl.bartlouwers.fsst.FsstTest" time="0.001"/>
+  <testcase name="testDecodeWithExplicitLength()" classname="nl.bartlouwers.fsst.FsstTest" time="0.0"/>
+  <testcase name="testEncodeDecodeWithAllOnes()" classname="nl.bartlouwers.fsst.FsstTest" time="0.001"/>
+  <testcase name="testEncodeDecodeWithSmallData()" classname="nl.bartlouwers.fsst.FsstTest" time="0.001"/>
+  <testcase name="testEncodeDecodeWithAllZeros()" classname="nl.bartlouwers.fsst.FsstTest" time="0.0"/>
+  <testcase name="testEncodeDecodeWithEmptyData()" classname="nl.bartlouwers.fsst.FsstTest" time="0.001"/>
+  <testcase name="testMultipleEncodes()" classname="nl.bartlouwers.fsst.FsstTest" time="0.001"/>
+  <testcase name="testSymbolTableFields()" classname="nl.bartlouwers.fsst.FsstTest" time="0.001"/>
+  <testcase name="testEncodeDecodeWithBinaryData()" classname="nl.bartlouwers.fsst.FsstTest" time="0.0"/>
+  <testcase name="testCompressionRatio()" classname="nl.bartlouwers.fsst.FsstTest" time="0.0"/>
+  <testcase name="testEncodeDecodeRoundTrip()" classname="nl.bartlouwers.fsst.FsstTest" time="0.001"/>
+  <testcase name="testUnicodeText()" classname="nl.bartlouwers.fsst.FsstTest" time="0.0"/>
+  <testcase name="testEncodeDecodeWithRandomData()" classname="nl.bartlouwers.fsst.FsstTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
