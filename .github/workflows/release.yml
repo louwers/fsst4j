@@ -104,7 +104,7 @@ jobs:
           retention-days: 1
       
       - name: Upload build directory
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.os }}
           path: |
