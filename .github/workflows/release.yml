@@ -178,15 +178,6 @@ jobs:
         with:
           cmake-version: 'latest'
       
-        - name: Build sources and javadoc (for main artifact)
-          run: |
-            if [ -f ./gradlew ]; then
-              ./gradlew clean jar sourcesJar plainJavadocJar --no-daemon
-            else
-              gradle clean jar sourcesJar plainJavadocJar --no-daemon
-            fi
-          shell: bash
-      
       - name: Prepare platform JARs with classifiers
         run: |
           mkdir -p platform-jars-classified
@@ -226,13 +217,13 @@ jobs:
       - name: Publish to Maven Central
         run: |
           if [ -f ./gradlew ]; then
-            ./gradlew publish -PplatformJarsDir=platform-jars-classified
+            ./gradlew publishToMavenCentral -PplatformJarsDir=platform-jars-classified --no-daemon
           else
-            gradle publish -PplatformJarsDir=platform-jars-classified
+            gradle publishToMavenCentral -PplatformJarsDir=platform-jars-classified --no-daemon
           fi
         env:
-          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
         shell: bash
