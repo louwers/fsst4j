@@ -34,7 +34,12 @@ val libraryName = "libfsst.$libraryExtension"
 
 // FSST build directory
 val fsstBuildDir = file("fsst/build")
-val fsstStaticLib = fsstBuildDir.resolve("libfsst.a")
+// On Windows with Visual Studio generators, the library is in Release/ subdirectory
+val fsstStaticLib = if (isWindows) {
+    fsstBuildDir.resolve("Release").resolve("libfsst.a")
+} else {
+    fsstBuildDir.resolve("libfsst.a")
+}
 val fsstSharedLib = fsstBuildDir.resolve(libraryName)
 
 // Task to configure CMake
