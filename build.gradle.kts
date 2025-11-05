@@ -1,7 +1,10 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
     java
     `maven-publish`
     signing
+    id("com.vanniktech.maven.publish") version "0.28.0"
 }
 
 java {
@@ -239,104 +242,93 @@ tasks.named<Jar>("jar") {
 }
 
 // Maven publishing configuration
-java {
-    withJavadocJar()
-    withSourcesJar()
+// Note: The vanniktech plugin automatically handles javadoc and sources jars
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
+    signAllPublications()
+    
+    coordinates("nl.bartlouwers", "fsst4j", "0.0.2")
+    
+    pom {
+        name = "FSST4J"
+        description = "Java library wrapping FSST (Fast Static Symbol Table) compression using Foreign Function & Memory API"
+        inceptionYear = "2024"
+        url = "https://github.com/bartlouwers/fsst4j"
+        
+        licenses {
+            license {
+                name = "MIT"
+                url = "https://opensource.org/licenses/MIT"
+                distribution = "https://opensource.org/licenses/MIT"
+            }
+        }
+        
+        developers {
+            developer {
+                id = "bartlouwers"
+                name = "Bart Louwers"
+                url = "https://github.com/bartlouwers/"
+            }
+        }
+        
+        scm {
+            url = "https://github.com/bartlouwers/fsst4j"
+            connection = "scm:git:git://github.com/bartlouwers/fsst4j.git"
+            developerConnection = "scm:git:ssh://git@github.com/bartlouwers/fsst4j.git"
+        }
+    }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            
-            groupId = "nl.bartlouwers"
-            artifactId = "fsst4j"
-            version = "0.0.1"
-            
-            // Add platform-specific JARs if provided (for multi-platform publishing)
-            val platformJarsDir = project.findProperty("platformJarsDir") as String?
-            if (platformJarsDir != null) {
-                val platformDir = file(platformJarsDir)
-                if (platformDir.exists()) {
-                    platformDir.listFiles()?.forEach { jarFile ->
-                        if (jarFile.name.endsWith(".jar")) {
-                            // Extract platform from filename
-                            // Format options:
-                            // - fsst4j-0.0.1-linux-x86_64.jar (with version)
-                            // - fsst4j-linux-x86_64.jar (without version)
-                            val name = jarFile.nameWithoutExtension
-                            // Try pattern with version first: artifactId-version-platform
-                            var pattern = Regex("^fsst4j-[0-9.]+-(.+)$")
-                            var match = pattern.find(name)
-                            // If no match, try without version: artifactId-platform
-                            if (match == null) {
-                                pattern = Regex("^fsst4j-(.+)$")
-                                match = pattern.find(name)
+// Add platform-specific JARs if provided (for multi-platform publishing)
+// This needs to be done after the mavenPublishing block creates the publication
+afterEvaluate {
+    // Fix task dependency for maven-publish plugin
+    tasks.findByName("generateMetadataFileForMavenPublication")?.let { metadataTask ->
+        tasks.findByName("plainJavadocJar")?.let { javadocJarTask ->
+            metadataTask.mustRunAfter(javadocJarTask)
+        }
+    }
+    
+    val platformJarsDir = project.findProperty("platformJarsDir") as String?
+    if (platformJarsDir != null) {
+        val platformDir = file(platformJarsDir)
+        if (platformDir.exists()) {
+            val publication = publishing.publications.findByName("maven") as? org.gradle.api.publish.maven.MavenPublication
+            if (publication != null) {
+                platformDir.listFiles()?.forEach { jarFile ->
+                    if (jarFile.name.endsWith(".jar")) {
+                        // Extract platform from filename
+                        // Format options:
+                        // - fsst4j-0.0.1-linux-x86_64.jar (with version)
+                        // - fsst4j-linux-x86_64.jar (without version)
+                        val name = jarFile.nameWithoutExtension
+                        // Try pattern with version first: artifactId-version-platform
+                        var pattern = Regex("^fsst4j-[0-9.]+-(.+)$")
+                        var match = pattern.find(name)
+                        // If no match, try without version: artifactId-platform
+                        if (match == null) {
+                            pattern = Regex("^fsst4j-(.+)$")
+                            match = pattern.find(name)
+                        }
+                        if (match != null) {
+                            val platform = match.groupValues[1]
+                            println("Adding platform artifact: $platform from ${jarFile.name}")
+                            
+                            // Add as Maven artifact with classifier
+                            publication.artifact(jarFile) {
+                                classifier = platform
                             }
-                            if (match != null) {
-                                val platform = match.groupValues[1]
-                                println("Adding platform artifact: $platform from ${jarFile.name}")
-                                
-                                // Add as Maven artifact with classifier
-                                artifact(jarFile) {
-                                    classifier = platform
-                                }
-                            } else {
-                                println("Warning: Could not extract platform from ${jarFile.name}")
-                            }
+                        } else {
+                            println("Warning: Could not extract platform from ${jarFile.name}")
                         }
                     }
                 }
             }
-            
-            pom {
-                name.set("FSST4J")
-                description.set("Java library wrapping FSST (Fast Static Symbol Table) compression using Foreign Function & Memory API")
-                url.set("https://github.com/bartlouwers/fsst4j")
-                
-                licenses {
-                    license {
-                        name.set("MIT")
-                        url.set("https://opensource.org/licenses/MIT")
-                    }
-                }
-                
-                developers {
-                    developer {
-                        id.set("bartlouwers")
-                        name.set("Bart Louwers")
-                    }
-                }
-                
-                scm {
-                    connection.set("scm:git:git://github.com/bartlouwers/fsst4j.git")
-                    developerConnection.set("scm:git:ssh://github.com/bartlouwers/fsst4j.git")
-                    url.set("https://github.com/bartlouwers/fsst4j")
-                }
-            }
-        }
-    }
-    
-    repositories {
-        maven {
-            name = "Central"
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            credentials {
-                username = project.findProperty("sonatypeUsername") as String? 
-                    ?: project.findProperty("mavenCentralUsername") as String? ?: ""
-                password = project.findProperty("sonatypePassword") as String?
-                    ?: project.findProperty("mavenCentralPassword") as String? ?: ""
-            }
-        }
-        
-        // Also publish to local Maven for testing
-        maven {
-            name = "local"
-            url = uri("${layout.buildDirectory.get()}/local-repo")
         }
     }
 }
 
+// Configure signing with in-memory GPG keys
 signing {
     val signingInMemoryKey = project.findProperty("signingInMemoryKey") as String?
     val signingInMemoryKeyPassword = project.findProperty("signingInMemoryKeyPassword") as String?
@@ -344,8 +336,6 @@ signing {
     if (signingInMemoryKey != null && signingInMemoryKeyPassword != null) {
         useInMemoryPgpKeys(signingInMemoryKey, signingInMemoryKeyPassword)
     }
-    
-    sign(publishing.publications["maven"])
 }
 
 
