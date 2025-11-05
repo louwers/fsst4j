@@ -71,9 +71,23 @@ val fsstSharedLib = if (isWindows) {
     fsstBuildDir.resolve(libraryName)
 }
 
+tasks.register<Copy>("applyFsstPatch") {
+    group = "build"
+    description = "Apply CMakeLists.txt patch for Windows shared library support"
+    onlyIf { isWindows }
+    
+    from("fsst-patches/CMakeLists.txt")
+    into("fsst")
+    rename("CMakeLists.txt", "CMakeLists.txt")
+    
+    outputs.file("fsst/CMakeLists.txt")
+    inputs.file("fsst-patches/CMakeLists.txt")
+}
+
 tasks.register<Exec>("configureFsst") {
     group = "build"
     description = "Configure FSST build with CMake"
+    dependsOn("applyFsstPatch")
     workingDir = fsstBuildDir
     
     val cmakeArgs = mutableListOf("..", "-DCMAKE_BUILD_TYPE=Release")
