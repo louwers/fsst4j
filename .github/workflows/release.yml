@@ -178,14 +178,14 @@ jobs:
         with:
           cmake-version: 'latest'
       
-      - name: Build sources and javadoc (for main artifact)
-        run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew clean jar sourcesJar javadocJar --no-daemon
-          else
-            gradle clean jar sourcesJar javadocJar --no-daemon
-          fi
-        shell: bash
+        - name: Build sources and javadoc (for main artifact)
+          run: |
+            if [ -f ./gradlew ]; then
+              ./gradlew clean jar sourcesJar plainJavadocJar --no-daemon
+            else
+              gradle clean jar sourcesJar plainJavadocJar --no-daemon
+            fi
+          shell: bash
       
       - name: Prepare platform JARs with classifiers
         run: |
