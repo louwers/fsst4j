@@ -5,128 +5,16 @@ on:
     tags:
       - '*.*.*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish (e.g., 1.0.0)'
-        required: true
-        type: string
 
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        java-version: ['22']
-    
-    runs-on: ${{ matrix.os }}
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      
-      - name: Set up JDK ${{ matrix.java-version }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ matrix.java-version }}
-          distribution: 'temurin'
-      
-      - name: Setup CMake
-        uses: jwlawson/actions-setup-cmake@v1.14
-        with:
-          cmake-version: 'latest'
-      
-      - name: Make gradlew executable
-        if: runner.os != 'Windows'
-        run: |
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew
-          fi
-      
-      - name: Extract version from tag
-        if: github.event_name == 'push'
-        id: version
-        run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION=${VERSION#v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-        shell: bash
-      
-      - name: Update version (Unix)
-        if: github.event_name == 'push' && runner.os != 'Windows'
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          sed -i.bak "s/version = \".*\"/version = \"$VERSION\"/" build.gradle.kts
-        shell: bash
-      
-      - name: Update version (Windows)
-        if: github.event_name == 'push' && runner.os == 'Windows'
-        run: |
-          $VERSION = "${{ steps.version.outputs.version }}"
-          $content = Get-Content build.gradle.kts -Raw
-          $content = $content -replace 'version = ".*"', "version = `"$VERSION`""
-          Set-Content build.gradle.kts -Value $content -NoNewline
-        shell: pwsh
-      
-      - name: Update version (manual - Unix)
-        if: github.event_name == 'workflow_dispatch' && runner.os != 'Windows'
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          sed -i.bak "s/version = \".*\"/version = \"$VERSION\"/" build.gradle.kts
-        shell: bash
-      
-      - name: Update version (manual - Windows)
-        if: github.event_name == 'workflow_dispatch' && runner.os == 'Windows'
-        run: |
-          $VERSION = "${{ github.event.inputs.version }}"
-          $content = Get-Content build.gradle.kts -Raw
-          $content = $content -replace 'version = ".*"', "version = `"$VERSION`""
-          Set-Content build.gradle.kts -Value $content -NoNewline
-        shell: pwsh
-      
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      
-      - name: Build JAR
-        run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew clean jar --no-daemon
-          else
-            gradle clean jar --no-daemon
-          fi
-        shell: bash
-      
-      - name: Upload JAR artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: jar-${{ matrix.os }}
-          path: build/libs/*.jar
-          retention-days: 1
-      
-      - name: Upload build directory
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ matrix.os }}
-          path: |
-            build/
-          retention-days: 1
-          if-no-files-found: ignore
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    if: success()
-    
-    steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -137,98 +25,91 @@ jobs:
           java-version: '22'
           distribution: 'temurin'
       
-      - name: Make gradlew executable
-        run: |
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew
-          fi
-      
-      - name: Extract version from tag
-        if: github.event_name == 'push'
-        id: version
-        run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION=${VERSION#v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-        shell: bash
-      
-      - name: Update version
-        if: github.event_name == 'push'
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          sed -i.bak "s/version = \".*\"/version = \"$VERSION\"/" build.gradle.kts
-        shell: bash
-      
-      - name: Update version (manual)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          sed -i.bak "s/version = \".*\"/version = \"$VERSION\"/" build.gradle.kts
-        shell: bash
-      
-      - name: Download all JAR artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: jar-*
-          merge-multiple: false
-          path: platform-jars
-      
       - name: Setup CMake
-        uses: jwlawson/actions-setup-cmake@v1.14
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: 'latest'
       
-      - name: Prepare platform JARs with classifiers
-        run: |
-          mkdir -p platform-jars-classified
-          # Map OS names to platform classifiers
-          declare -A platform_map
-          platform_map["ubuntu-latest"]="linux-x86_64"
-          platform_map["macos-latest"]="macos-aarch64"
-          platform_map["windows-latest"]="windows-x86_64"
-          
-          # Copy JARs with platform-specific names
-          for jar_dir in platform-jars/*/; do
-            os_name=$(basename "$jar_dir" | sed 's/jar-//')
-            platform=${platform_map[$os_name]:-$os_name}
-            
-            for jar in "$jar_dir"*.jar; do
-              if [ -f "$jar" ]; then
-                # Extract base name (e.g., fsst4j or fsst4j-0.0.1)
-                basename=$(basename "$jar" .jar)
-                # If basename is just "fsst4j", we need to add version
-                # Get version from build.gradle.kts (coordinates() call)
-                if [ "$basename" = "fsst4j" ]; then
-                  VERSION=$(grep 'coordinates(' build.gradle.kts | sed 's/.*coordinates(".*", ".*", "\([^"]*\)".*/\1/' | head -1)
-                  if [ -n "$VERSION" ] && [ "$VERSION" != "coordinates(" ]; then
-                    basename="fsst4j-$VERSION"
-                  fi
-                fi
-                # Rename with platform classifier: fsst4j-0.0.1-linux-x86_64.jar
-                cp "$jar" "platform-jars-classified/${basename}-${platform}.jar"
-                echo "Copied $jar -> platform-jars-classified/${basename}-${platform}.jar"
-              fi
-            done
-          done
-          echo "Platform JARs prepared:"
-          ls -la platform-jars-classified/
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: ${{ runner.os }}-gradle-
+      
+      - name: Build JAR
+        run: ./gradlew clean jar --no-daemon
         shell: bash
       
-      - name: Publish to Maven Central
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-${{ matrix.os }}
+          path: build/libs/*.jar
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      
+      - name: Set up JDK 22
+        uses: actions/setup-java@v4
+        with:
+          java-version: '22'
+          distribution: 'temurin'
+      
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: 'latest'
+      
+      - name: Download JAR artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: jar-*
+          path: platform-jars
+      
+      - name: Prepare platform JARs
         run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew publishToMavenCentral -PplatformJarsDir=platform-jars-classified --no-daemon
-          else
-            gradle publishToMavenCentral -PplatformJarsDir=platform-jars-classified --no-daemon
-          fi
+          mkdir -p platform-jars-classified
+          VERSION=$(git describe --tags --exact-match HEAD | sed 's/^v//')
+          
+          declare -A platform_map=(
+            ["ubuntu-latest"]="linux-x86_64"
+            ["macos-latest"]="macos-aarch64"
+            ["windows-latest"]="windows-x86_64"
+          )
+          
+          for jar_dir in platform-jars/*/; do
+            os=$(basename "$jar_dir" | sed 's/jar-//')
+            platform=${platform_map[$os]:-$os}
+            for jar in "$jar_dir"*.jar; do
+              [ -f "$jar" ] || continue
+              base=$(basename "$jar" .jar)
+              [ "$base" = "fsst4j" ] && base="fsst4j-$VERSION"
+              cp "$jar" "platform-jars-classified/${base}-${platform}.jar"
+              echo "Added: ${base}-${platform}.jar"
+            done
+          done
+      
+      - name: Publish to Maven Central
+        run: ./gradlew publishToMavenCentral -PplatformJarsDir=platform-jars-classified --no-daemon
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
-        shell: bash
       
-      - name: Upload published artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: published-artifacts
