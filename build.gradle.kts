@@ -64,7 +64,12 @@ val fsstStaticLib = if (isWindows) {
 } else {
     fsstBuildDir.resolve("libfsst.a")
 }
-val fsstSharedLib = fsstBuildDir.resolve(libraryName)
+// On Windows, CMake builds shared library directly, otherwise we build it from static
+val fsstSharedLib = if (isWindows) {
+    fsstBuildDir.resolve("Release/libfsst.dll")
+} else {
+    fsstBuildDir.resolve(libraryName)
+}
 
 tasks.register<Exec>("configureFsst") {
     group = "build"
@@ -89,13 +94,14 @@ tasks.register<Exec>("buildFsstStatic") {
     workingDir = fsstBuildDir
     
     val buildArgs = if (isWindows) {
-        listOf("--build", ".", "--config", "Release", "--target", "fsst")
+        // On Windows, build both static and shared libraries (build all targets)
+        listOf("--build", ".", "--config", "Release")
     } else {
         listOf("--build", ".", "--target", "fsst")
     }
     commandLine("cmake", *buildArgs.toTypedArray())
     
-    outputs.file(fsstStaticLib)
+    outputs.files(listOfNotNull(fsstStaticLib, if (isWindows) fsstSharedLib else null))
     inputs.files(
         "fsst/libfsst.cpp", "fsst/fsst_avx512.cpp",
         "fsst/fsst_avx512_unroll1.inc", "fsst/fsst_avx512_unroll2.inc",
@@ -110,12 +116,14 @@ tasks.register<Exec>("buildFsstShared") {
     dependsOn("buildFsstStatic")
     workingDir = fsstBuildDir
     
+    // On Windows, CMake builds the shared library directly, so skip this task
+    onlyIf { !isWindows }
+    
     val linkerFlags = when {
-        isWindows -> listOf("-shared", "-o", fsstSharedLib.absolutePath, fsstStaticLib.absolutePath, "-std=c++17")
         isMac -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,-all_load", fsstStaticLib.absolutePath, "-std=c++17")
         else -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
     }
-    commandLine(if (isWindows) "g++" else "c++", *linkerFlags.toTypedArray())
+    commandLine("c++", *linkerFlags.toTypedArray())
     
     outputs.file(fsstSharedLib)
     inputs.file(fsstStaticLib)
@@ -124,7 +132,7 @@ tasks.register<Exec>("buildFsstShared") {
 tasks.register<Copy>("copyNativeLibrary") {
     group = "build"
     description = "Copy FSST shared library to build/lib"
-    dependsOn("buildFsstShared")
+    dependsOn(if (isWindows) "buildFsstStatic" else "buildFsstShared")
     
     from(fsstSharedLib)
     into("build/lib")
