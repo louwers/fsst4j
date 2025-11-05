@@ -18,7 +18,6 @@ FSST is a compression scheme focused on string/text data that allows random-acce
 - **CMake** and a C++ compiler (for building the native fsst library)
   - On macOS: Xcode Command Line Tools
   - On Linux: `build-essential` or equivalent
-  - On Windows: Visual Studio or MinGW
 
 ## Building
 
@@ -60,7 +59,7 @@ gradle buildFsstShared
 gradle copyNativeLibrary
 ```
 
-The build system automatically detects your platform (macOS, Linux, Windows) and uses the appropriate commands and library extensions.
+The build system automatically detects your platform (macOS, Linux) and uses the appropriate commands and library extensions.
 
 ## Running Tests
 
@@ -238,7 +237,6 @@ You should see something like `openjdk version "22"` or higher.
 
 - **macOS**: The library is named `libfsst.dylib`
 - **Linux**: The library should be named `libfsst.so`
-- **Windows**: The library should be named `fsst.dll`
 
 The library loading code in `FsstFfm.java` will automatically detect the correct library name based on your platform.
 
@@ -250,7 +248,7 @@ This project uses the FSST library, which is distributed under the MIT License. 
 
 The project includes GitHub Actions workflows for automated building and publishing:
 
-- **`.github/workflows/build.yml`** - Builds and tests on macOS, Linux, and Windows on every push/PR
+- **`.github/workflows/build.yml`** - Builds and tests on macOS and Linux on every push/PR
 - **`.github/workflows/publish.yml`** - Publishes to Maven Central on release creation
 
 ## Publishing to Maven Central

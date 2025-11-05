@@ -39,17 +39,8 @@ class FsstFfm {
         
         // Try to find library in common development locations
         String userDir = System.getProperty("user.dir");
-        String os = System.getProperty("os.name").toLowerCase();
-        boolean isWindows = os.contains("win");
         
-        // On Windows, System.mapLibraryName("fsst") returns "fsst.dll"
-        // but the build creates "libfsst.dll", so we need to check both
-        String[] libraryNames;
-        if (isWindows && !libraryName.startsWith("lib")) {
-            libraryNames = new String[]{libraryName, "lib" + libraryName};
-        } else {
-            libraryNames = new String[]{libraryName};
-        }
+        String[] libraryNames = new String[]{libraryName};
         
         Path[] basePaths = {
             Paths.get(userDir, "build", "lib"),
@@ -80,8 +71,7 @@ class FsstFfm {
             String os = System.getProperty("os.name").toLowerCase();
             String arch = System.getProperty("os.arch").toLowerCase();
             
-            String osName = os.contains("win") ? "windows" : 
-                           os.contains("mac") ? "macos" : 
+            String osName = os.contains("mac") ? "macos" : 
                            os.contains("linux") ? "linux" : "unknown";
             
             String archName = (arch.contains("aarch64") || arch.contains("arm64")) ? "aarch64" :
@@ -112,9 +102,7 @@ class FsstFfm {
                 inputStream.close();
                 
                 // Make executable (Unix-like systems)
-                if (!System.getProperty("os.name").toLowerCase().contains("win")) {
-                    tempLib.toFile().setExecutable(true);
-                }
+                tempLib.toFile().setExecutable(true);
                 
                 return tempLib;
             }

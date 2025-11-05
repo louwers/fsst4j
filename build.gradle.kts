@@ -29,7 +29,6 @@ fun detectPlatform(): String {
     val arch = System.getProperty("os.arch").lowercase()
     
     val osName = when {
-        os.contains("win") -> "windows"
         os.contains("mac") -> "macos"
         os.contains("linux") -> "linux"
         else -> "unknown"
@@ -47,23 +46,17 @@ fun detectPlatform(): String {
 
 // Platform detection
 val os = System.getProperty("os.name").lowercase()
-val isWindows = os.contains("win")
 val isMac = os.contains("mac")
 val isLinux = os.contains("linux")
 
 val libraryExtension = when {
-    isWindows -> "dll"
     isMac -> "dylib"
     else -> "so"
 }
 val libraryName = "libfsst.$libraryExtension"
 
 val fsstBuildDir = file("fsst/build")
-val fsstStaticLib = if (isWindows) {
-    fsstBuildDir.resolve("Release/fsst.lib")
-} else {
-    fsstBuildDir.resolve("libfsst.a")
-}
+val fsstStaticLib = fsstBuildDir.resolve("libfsst.a")
 val fsstSharedLib = fsstBuildDir.resolve(libraryName)
 
 tasks.register<Exec>("configureFsst") {
@@ -88,12 +81,7 @@ tasks.register<Exec>("buildFsstStatic") {
     dependsOn("configureFsst")
     workingDir = fsstBuildDir
     
-    val buildArgs = if (isWindows) {
-        listOf("--build", ".", "--config", "Release", "--target", "fsst")
-    } else {
-        listOf("--build", ".", "--target", "fsst")
-    }
-    commandLine("cmake", *buildArgs.toTypedArray())
+    commandLine("cmake", "--build", ".", "--target", "fsst")
     
     outputs.file(fsstStaticLib)
     inputs.files(
@@ -111,11 +99,10 @@ tasks.register<Exec>("buildFsstShared") {
     workingDir = fsstBuildDir
     
     val linkerFlags = when {
-        isWindows -> listOf("-shared", "-o", fsstSharedLib.absolutePath, fsstStaticLib.absolutePath, "-std=c++17")
         isMac -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,-all_load", fsstStaticLib.absolutePath, "-std=c++17")
         else -> listOf("-shared", "-o", fsstSharedLib.absolutePath, "-Wl,--whole-archive", fsstStaticLib.absolutePath, "-Wl,--no-whole-archive", "-std=c++17")
     }
-    commandLine(if (isWindows) "g++" else "c++", *linkerFlags.toTypedArray())
+    commandLine("c++", *linkerFlags.toTypedArray())
     
     outputs.file(fsstSharedLib)
     inputs.file(fsstStaticLib)
@@ -208,8 +195,8 @@ mavenPublishing {
     pom {
         name = "FSST4J"
         description = "Java library wrapping FSST (Fast Static Symbol Table) compression using Foreign Function & Memory API"
-        inceptionYear = "2024"
-        url = "https://github.com/bartlouwers/fsst4j"
+        inceptionYear = "2025"
+        url = "https://github.com/louwers/fsst4j"
         
         licenses {
             license {
@@ -222,14 +209,14 @@ mavenPublishing {
             developer {
                 id = "bartlouwers"
                 name = "Bart Louwers"
-                url = "https://github.com/bartlouwers/"
+                url = "https://github.com/louwers/"
             }
         }
         
         scm {
-            url = "https://github.com/bartlouwers/fsst4j"
-            connection = "scm:git:git://github.com/bartlouwers/fsst4j.git"
-            developerConnection = "scm:git:ssh://git@github.com/bartlouwers/fsst4j.git"
+            url = "https://github.com/louwers/fsst4j"
+            connection = "scm:git:git://github.com/louwers/fsst4j.git"
+            developerConnection = "scm:git:ssh://git@github.com/louwers/fsst4j.git"
         }
     }
 }

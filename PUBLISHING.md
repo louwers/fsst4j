@@ -31,12 +31,6 @@ gradle clean build publish
 # Creates: fsst4j-1.0.0.jar (contains linux-x86_64 native library)
 ```
 
-**On Windows (x86_64) - via CI/CD:**
-```bash
-gradle clean build publish
-# Creates: fsst4j-1.0.0.jar (contains windows-x86_64 native library)
-```
-
 Each JAR will have the same coordinates but contain different native libraries. Users on each platform will get the correct JAR automatically.
 
 ### Option 2: Universal JAR (All Platforms)
@@ -160,7 +154,7 @@ The repository includes GitHub Actions workflows for automated publishing:
    - Create a GitHub Release (automatically triggers `publish.yml`)
    - Or use "Run workflow" manually with a version number
 
-The workflow will build on all platforms (macOS, Linux, Windows) and publish each platform-specific JAR.
+The workflow will build on all platforms (macOS, Linux) and publish each platform-specific JAR.
 
 ### CI/CD Setup
 
@@ -179,14 +173,12 @@ jobs:
   publish:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         include:
           - os: ubuntu-latest
             platform: linux-x86_64
           - os: macos-latest
             platform: macos-aarch64
-          - os: windows-latest
-            platform: windows-x86_64
     
     runs-on: ${{ matrix.os }}
     
@@ -222,7 +214,6 @@ To create a JAR with all platform libraries (optional advanced approach):
 2. Collect all platform libraries with platform-specific names:
    - `libfsst-macos-aarch64.dylib`
    - `libfsst-linux-x86_64.so`
-   - `libfsst-windows-x86_64.dll`
 3. Include them all in one JAR in `META-INF/native/`
 4. The library loader (`FsstFfm.java`) already supports this - it detects the platform and loads the correct library
 
