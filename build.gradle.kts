@@ -197,8 +197,12 @@ tasks.register<Copy>("embedNativeLibrary") {
     outputs.upToDateWhen { false }
 }
 
-// Fix task dependency for javadoc
+// Fix task dependencies
 tasks.named("javadoc") {
+    mustRunAfter("embedNativeLibrary")
+}
+
+tasks.named("compileTestJava") {
     mustRunAfter("embedNativeLibrary")
 }
 

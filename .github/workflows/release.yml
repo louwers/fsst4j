@@ -181,9 +181,9 @@ jobs:
       - name: Build sources and javadoc (for main artifact)
         run: |
           if [ -f ./gradlew ]; then
-            ./gradlew clean build sourcesJar javadocJar
+            ./gradlew clean jar sourcesJar javadocJar --no-daemon
           else
-            gradle clean build sourcesJar javadocJar
+            gradle clean jar sourcesJar javadocJar --no-daemon
           fi
         shell: bash
       
