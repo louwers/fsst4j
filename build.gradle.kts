@@ -108,8 +108,8 @@ tasks.register<Exec>("buildFsstStatic") {
     workingDir = fsstBuildDir
     
     val buildArgs = if (isWindows) {
-        // On Windows, build both static and shared libraries (build all targets)
-        listOf("--build", ".", "--config", "Release")
+        // On Windows, build both static and shared libraries (but not fsst12 which uses Unix headers)
+        listOf("--build", ".", "--config", "Release", "--target", "fsst", "fsst_shared")
     } else {
         listOf("--build", ".", "--target", "fsst")
     }
