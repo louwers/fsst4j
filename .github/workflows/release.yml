@@ -197,10 +197,10 @@ jobs:
                 # Extract base name (e.g., fsst4j or fsst4j-0.0.1)
                 basename=$(basename "$jar" .jar)
                 # If basename is just "fsst4j", we need to add version
-                # Get version from build.gradle.kts
+                # Get version from build.gradle.kts (coordinates() call)
                 if [ "$basename" = "fsst4j" ]; then
-                  VERSION=$(grep 'coordinates(' build.gradle.kts | sed -n 's/.*"\([^"]*\)".*/\1/p' | head -1)
-                  if [ -n "$VERSION" ]; then
+                  VERSION=$(grep 'coordinates(' build.gradle.kts | sed 's/.*coordinates(".*", ".*", "\([^"]*\)".*/\1/' | head -1)
+                  if [ -n "$VERSION" ] && [ "$VERSION" != "coordinates(" ]; then
                     basename="fsst4j-$VERSION"
                   fi
                 fi
