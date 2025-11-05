@@ -32,15 +32,5 @@ public interface Fsst {
    */
   byte[] decode(
       byte[] symbols, int[] symbolLengths, byte[] compressedData, int decompressedLength);
-
-  /**
-   * @deprecated use {@link #decode(byte[], int[], byte[], int)} instead with an explicit length
-   * @param symbols The symbol table
-   * @param symbolLengths Array of lengths for each symbol
-   * @param compressedData The compressed data
-   * @return The decompressed data
-   */
-  @Deprecated
-  byte[] decode(byte[] symbols, int[] symbolLengths, byte[] compressedData);
 }
 

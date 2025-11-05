@@ -174,15 +174,15 @@ class FsstTest {
     }
     
     @Test
-    void testDecodeDeprecatedMethod() {
+    void testDecodeWithExplicitParameters() {
         byte[] data = "test".getBytes(StandardCharsets.UTF_8);
         SymbolTable encoded = fsst.encode(data);
         
-        @SuppressWarnings("deprecation")
         byte[] decoded = fsst.decode(
             encoded.symbols(),
             encoded.symbolLengths(),
-            encoded.compressedData()
+            encoded.compressedData(),
+            encoded.decompressedLength()
         );
         
         assertArrayEquals(data, decoded);
