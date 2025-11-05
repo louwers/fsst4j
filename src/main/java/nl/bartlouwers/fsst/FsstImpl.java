@@ -5,7 +5,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 
 /**
- * Implementation of the Fsst interface using Foreign Function & Memory API.
+ * Implementation of the Fsst interface using Foreign Function &amp; Memory API.
  */
 public class FsstImpl implements Fsst {
     

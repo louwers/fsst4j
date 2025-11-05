@@ -123,8 +123,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    # Publish if at least one platform succeeds (we'll publish what we have)
-    if: always()
+    if: success()
     
     steps:
       - name: Checkout code

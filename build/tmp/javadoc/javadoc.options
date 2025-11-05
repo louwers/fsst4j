@@ -1,0 +1,10 @@
+-classpath '/Users/bart/src/ffst-java/build/classes/java/main:/Users/bart/src/ffst-java/build/resources/main'
+-d '/Users/bart/src/ffst-java/build/docs/javadoc'
+-doctitle 'fsst4j API'
+-notimestamp 
+-quiet 
+-windowtitle 'fsst4j API'
+'/Users/bart/src/ffst-java/src/main/java/nl/bartlouwers/fsst/SymbolTable.java'
+'/Users/bart/src/ffst-java/src/main/java/nl/bartlouwers/fsst/Fsst.java'
+'/Users/bart/src/ffst-java/src/main/java/nl/bartlouwers/fsst/FsstFfm.java'
+'/Users/bart/src/ffst-java/src/main/java/nl/bartlouwers/fsst/FsstImpl.java'
