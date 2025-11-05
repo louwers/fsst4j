@@ -203,9 +203,17 @@ jobs:
             
             for jar in "$jar_dir"*.jar; do
               if [ -f "$jar" ]; then
-                # Extract base name and version (e.g., fsst4j-1.0.0)
+                # Extract base name (e.g., fsst4j or fsst4j-0.0.1)
                 basename=$(basename "$jar" .jar)
-                # Rename with platform classifier: fsst4j-1.0.0-linux-x86_64.jar
+                # If basename is just "fsst4j", we need to add version
+                # Get version from build.gradle.kts
+                if [ "$basename" = "fsst4j" ]; then
+                  VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' build.gradle.kts | head -1)
+                  if [ -n "$VERSION" ]; then
+                    basename="fsst4j-$VERSION"
+                  fi
+                fi
+                # Rename with platform classifier: fsst4j-0.0.1-linux-x86_64.jar
                 cp "$jar" "platform-jars-classified/${basename}-${platform}.jar"
                 echo "Copied $jar -> platform-jars-classified/${basename}-${platform}.jar"
               fi

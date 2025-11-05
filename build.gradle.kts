@@ -251,7 +251,7 @@ publishing {
             
             groupId = "nl.bartlouwers"
             artifactId = "fsst4j"
-            version = "1.0.0-SNAPSHOT"
+            version = "0.0.1"
             
             // Add platform-specific JARs if provided (for multi-platform publishing)
             val platformJarsDir = project.findProperty("platformJarsDir") as String?
@@ -261,12 +261,18 @@ publishing {
                     platformDir.listFiles()?.forEach { jarFile ->
                         if (jarFile.name.endsWith(".jar")) {
                             // Extract platform from filename
-                            // Format: fsst4j-0.0.1-linux-x86_64.jar
-                            // Remove .jar extension and artifactId-version- prefix
+                            // Format options:
+                            // - fsst4j-0.0.1-linux-x86_64.jar (with version)
+                            // - fsst4j-linux-x86_64.jar (without version)
                             val name = jarFile.nameWithoutExtension
-                            // Match pattern: artifactId-version-platform
-                            val pattern = Regex("^fsst4j-[0-9.]+-(.+)$")
-                            val match = pattern.find(name)
+                            // Try pattern with version first: artifactId-version-platform
+                            var pattern = Regex("^fsst4j-[0-9.]+-(.+)$")
+                            var match = pattern.find(name)
+                            // If no match, try without version: artifactId-platform
+                            if (match == null) {
+                                pattern = Regex("^fsst4j-(.+)$")
+                                match = pattern.find(name)
+                            }
                             if (match != null) {
                                 val platform = match.groupValues[1]
                                 println("Adding platform artifact: $platform from ${jarFile.name}")
