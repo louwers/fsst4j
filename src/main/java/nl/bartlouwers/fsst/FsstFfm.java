@@ -39,18 +39,32 @@ class FsstFfm {
         
         // Try to find library in common development locations
         String userDir = System.getProperty("user.dir");
-        String[] searchPaths = {
-            userDir + "/build/lib/" + libraryName,
-            userDir + "/fsst/build/lib/" + libraryName,
-            "build/lib/" + libraryName,
-            "fsst/build/lib/" + libraryName,
-            "../fsst/build/lib/" + libraryName
+        String os = System.getProperty("os.name").toLowerCase();
+        boolean isWindows = os.contains("win");
+        
+        // On Windows, System.mapLibraryName("fsst") returns "fsst.dll"
+        // but the build creates "libfsst.dll", so we need to check both
+        String[] libraryNames;
+        if (isWindows && !libraryName.startsWith("lib")) {
+            libraryNames = new String[]{libraryName, "lib" + libraryName};
+        } else {
+            libraryNames = new String[]{libraryName};
+        }
+        
+        Path[] basePaths = {
+            Paths.get(userDir, "build", "lib"),
+            Paths.get(userDir, "fsst", "build", "lib"),
+            Paths.get("build", "lib"),
+            Paths.get("fsst", "build", "lib"),
+            Paths.get("..", "fsst", "build", "lib")
         };
         
-        for (String path : searchPaths) {
-            Path libPath = Paths.get(path);
-            if (java.nio.file.Files.exists(libPath)) {
-                return libPath;
+        for (Path basePath : basePaths) {
+            for (String libName : libraryNames) {
+                Path libPath = basePath.resolve(libName);
+                if (java.nio.file.Files.exists(libPath)) {
+                    return libPath;
+                }
             }
         }
         return null;
