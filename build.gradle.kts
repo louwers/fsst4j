@@ -34,9 +34,9 @@ val libraryName = "libfsst.$libraryExtension"
 
 // FSST build directory
 val fsstBuildDir = file("fsst/build")
-// On Windows with Visual Studio generators, the library is in Release/ subdirectory
+// On Windows with Visual Studio generators, the library is in Release/ subdirectory and uses .lib extension
 val fsstStaticLib = if (isWindows) {
-    fsstBuildDir.resolve("Release").resolve("libfsst.a")
+    fsstBuildDir.resolve("Release").resolve("fsst.lib")
 } else {
     fsstBuildDir.resolve("libfsst.a")
 }
