@@ -261,18 +261,22 @@ publishing {
                     platformDir.listFiles()?.forEach { jarFile ->
                         if (jarFile.name.endsWith(".jar")) {
                             // Extract platform from filename
-                            // Format: fsst4j-1.0.0-linux-x86_64.jar
+                            // Format: fsst4j-0.0.1-linux-x86_64.jar
+                            // Remove .jar extension and artifactId-version- prefix
                             val name = jarFile.nameWithoutExtension
-                            val parts = name.split("-")
-                            if (parts.size >= 3) {
-                                // Skip artifactId and version, rest is platform
-                                val platform = parts.drop(2).joinToString("-")
+                            // Match pattern: artifactId-version-platform
+                            val pattern = Regex("^fsst4j-[0-9.]+-(.+)$")
+                            val match = pattern.find(name)
+                            if (match != null) {
+                                val platform = match.groupValues[1]
                                 println("Adding platform artifact: $platform from ${jarFile.name}")
                                 
                                 // Add as Maven artifact with classifier
                                 artifact(jarFile) {
                                     classifier = platform
                                 }
+                            } else {
+                                println("Warning: Could not extract platform from ${jarFile.name}")
                             }
                         }
                     }
